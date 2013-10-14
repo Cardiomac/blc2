@@ -24,6 +24,8 @@
     int countToTen;
     int focusOnOff;
     int timeCountDown;
+    int brightnessMultiplier;
+    
     bool exposeButtonOnOff;
     id timer;
     id holdTimer;

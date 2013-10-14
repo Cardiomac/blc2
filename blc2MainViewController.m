@@ -40,7 +40,7 @@
 
 
 
-- (IBAction)exposeButtonPressed:(id)sender{
+- (IBAction)exposeButtonPressed:(id)sender{  // This action is taken when the START buton is pressed
     
    
     NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
@@ -51,12 +51,13 @@
     if (exposeButtonOnOff == NO){
         exposeButtonOnOff = YES;
         
+        //turn off the POSITION button
         redOnOff = 0;
         [redButton setBackgroundColor:[UIColor blackColor]];
         [redButton setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
 
         
-        //turn off the focus button
+        //turn off the FOCUS button
         focusOnOff = 0;
         [focusButton setBackgroundColor:[UIColor blackColor]];
         [focusButton setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
@@ -72,7 +73,7 @@
     }
     
     else{
-        
+        [holdTimer invalidate];
         [self bleShieldSendNull:nil];
 
         exposeButtonOnOff = NO;
@@ -80,6 +81,18 @@
         [exposeButton setTitle:@"Start" forState:UIControlStateNormal];
         [exposeButton setBackgroundColor:[UIColor blackColor]];
         if ([metronomeOn isEqual: @"YES"]) [audioBeepPlayer play];
+        
+        //turn off the POSITION button
+        redOnOff = 0;
+        [redButton setBackgroundColor:[UIColor blackColor]];
+        [redButton setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
+        
+        
+        //turn off the FOCUS button
+        focusOnOff = 0;
+        [focusButton setBackgroundColor:[UIColor blackColor]];
+        [focusButton setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
+
         
     }
 }
@@ -89,10 +102,30 @@
     
     NSString *s;
     NSData *d;
+    NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
+    NSString *brightness = [prefs stringForKey:@"brightness"];
+    
     
     timeCountDown = timeInTenthSeconds;
     countToTen = 10;
     [self timerTenthTick:nil];
+    
+    
+    if ([brightness isEqual: @"HI"]){brightnessMultiplier = 51;}
+    else {brightnessMultiplier = 1;}
+
+    
+    // Calculate the Green LED Brightness and format the greenBrightness string properly
+    greenBrightness = (5-contrastInUnits)*brightnessMultiplier;
+    if (greenBrightness<10)greenBrightnessString = [NSMutableString stringWithFormat:@"00%i", greenBrightness];
+    if (greenBrightness>=10 && greenBrightness<100) greenBrightnessString = [NSMutableString stringWithFormat:@"0%i", greenBrightness];
+    if (greenBrightness>=100 && greenBrightness<1000) greenBrightnessString = [NSMutableString stringWithFormat:@"%i", greenBrightness];
+    
+    // Calculate the Blue LED Brightness and format the blueBrightness string properly
+    blueBrightness = (contrastInUnits*brightnessMultiplier);
+    if (blueBrightness<10)blueBrightnessString = [NSMutableString stringWithFormat:@"00%i", blueBrightness];
+    if (blueBrightness>=10 && blueBrightness<100) blueBrightnessString = [NSMutableString stringWithFormat:@"0%i", blueBrightness];
+    if (blueBrightness>=100 && blueBrightness<1000) blueBrightnessString = [NSMutableString stringWithFormat:@"%i", blueBrightness];
 
     
     s = [NSString stringWithFormat:@"000%@000%@%@\r\n",timeInSecondsString, greenBrightnessString, blueBrightnessString];
@@ -105,10 +138,17 @@
     
     NSString *s;
     NSData *d;
+    NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
+    NSString *redDimmer = [prefs stringForKey:@"redDimmer"];
     
     timeCountDown = 50;
     countToTen = 10;
     [self timerTenthTick:nil];
+    
+    //Set the Red Brightness based on user preferences
+    if ([redDimmer isEqual:@"HI"]) redBrightnessString = [NSMutableString stringWithFormat:@"255"];
+    else redBrightnessString = [NSMutableString stringWithFormat:@"064"];
+
     
     s = [NSString stringWithFormat:@"0000050%@000000\r\n", redBrightnessString];
     d = [s dataUsingEncoding:NSUTF8StringEncoding];
@@ -129,28 +169,37 @@
 }
 
 
-- (void)timerTenthTick:(id)sender{
+
+- (void)timerTenthTick:(id)sender{    // This is where the countdown occurs.  You arrive here when a data packet is received from the Arduino.  These data packets arrive every 0.1s as countdown is in progress. The arrival of the data packet alone triggers this call; the value of the data itself is not used.
+    
     
     NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
     NSString *metronomeOn = [prefs stringForKey:@"metronome"];
     NSString *precisionTiming = [prefs stringForKey:@"precisionTiming"];
    
     
+    // Reset the START button when the countdown reaches 0.
     if (timeCountDown <= 0){
         exposeButtonOnOff = NO;
         countToTen=0;
         [exposeButton setBackgroundColor:[UIColor blackColor]];
         [exposeButton setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
         [exposeButton setTitle:@"Start" forState:UIControlStateNormal];
-        if ([metronomeOn isEqual: @"YES"])[audioBeepPlayer play];
+        if (([metronomeOn isEqual: @"YES"]) && (redOnOff == 0) && (focusOnOff == 0))[audioBeepPlayer play];
+        
+        redOnOff = 0;
+        [redButton setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
+        [redButton setBackgroundColor:[UIColor blackColor]];
+
     }
     
+    // Otherwise display the countdown time on the START buttton
     else{
         if (exposeButtonOnOff == YES){
             if((timeInTenthSeconds > 999) || ([precisionTiming isEqual: @"NO"]))[exposeButton setTitle:[NSString stringWithFormat: @"%i", (timeCountDown+9)/10] forState:UIControlStateNormal];
             else[exposeButton setTitle:[NSString stringWithFormat: @"%i.%i", timeCountDown/10, timeCountDown%10] forState:UIControlStateNormal];
         
-            if (([metronomeOn isEqual: @"YES"]) && (countToTen == 10)){
+            if (([metronomeOn isEqual: @"YES"]) && (countToTen == 10) && (redOnOff == 0) && (focusOnOff == 0)){
                 [audioTinkPlayer play];
                 countToTen = 0;
             }
@@ -162,10 +211,11 @@
 
 
 
-- (IBAction)contrastUp:(id)sender {
+- (IBAction)contrastUp:(id)sender { // This action occurs when the UP CONTRAST button is pressed
     
     NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
     NSString *precisionContrast = [prefs stringForKey:@"precisionContrast"];
+
     
     if ([precisionContrast isEqual: @"NO"]){
         integerContrastInUnits = contrastInUnits*10;
@@ -186,31 +236,19 @@
     }
     if (contrastInUnits > 5) contrastInUnits = 5;
     
-    // Format the contrastField text string properly
+    // Format the contrastField text string properly for display
     integerContrastInUnits = contrastInUnits*10;
-    if (integerContrastInUnits%10 == 0){
-        [contrastField setText:[NSString stringWithFormat: @"%1.0f", contrastInUnits]];
-    }
+    if (integerContrastInUnits%10 == 0)[contrastField setText:[NSString stringWithFormat: @"%1.0f", contrastInUnits]];
     else [contrastField setText:[NSString stringWithFormat: @"%1.1f", contrastInUnits]];
     
-    // Calculate the Green LED Brightness and format the greenBrightness string properly
-    greenBrightness = (5-contrastInUnits)*51;
-    if (greenBrightness<10)greenBrightnessString = [NSString stringWithFormat:@"00%i", greenBrightness];
-    if (greenBrightness>=10 && greenBrightness<100) greenBrightnessString = [NSString stringWithFormat:@"0%i", greenBrightness];
-    if (greenBrightness>=100 && greenBrightness<1000) greenBrightnessString = [NSString stringWithFormat:@"%i", greenBrightness];
-    
-    // Calculate the Blue LED Brightness and format the blueBrightness string properly
-    blueBrightness = (contrastInUnits*51);
-    if (blueBrightness<10)blueBrightnessString = [NSString stringWithFormat:@"00%i", blueBrightness];
-    if (blueBrightness>=10 && blueBrightness<100) blueBrightnessString = [NSString stringWithFormat:@"0%i", blueBrightness];
-    if (blueBrightness>=100 && blueBrightness<1000) blueBrightnessString = [NSString stringWithFormat:@"%i", blueBrightness];
 }
 
 
-- (IBAction)contrastDown:(id)sender {
+- (IBAction)contrastDown:(id)sender { // This action occurs when the Down CONTRAST button is pressed
     
     NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
     NSString *precisionContrast = [prefs stringForKey:@"precisionContrast"];
+    
     if ([precisionContrast isEqual: @"NO"]){
         integerContrastInUnits = contrastInUnits*10;
         if ((integerContrastInUnits % 5) != 0){
@@ -231,22 +269,11 @@
 
     if (contrastInUnits < 0) contrastInUnits = 0;
     
-    // Format the contrastField text string properly
+    // Format the contrastField text string properly for display
     integerContrastInUnits=contrastInUnits*10;
     if (integerContrastInUnits%10 == 0)[contrastField setText:[NSString stringWithFormat: @"%1.0f", contrastInUnits]];
     else [contrastField setText:[NSString stringWithFormat: @"%1.1f", contrastInUnits]];
     
-    // Calculate the Green LED Brightness and format the greenBrightness string properly
-    greenBrightness = (5-contrastInUnits)*51;
-    if (greenBrightness<10)greenBrightnessString = [NSString stringWithFormat:@"00%i", greenBrightness];
-    if (greenBrightness>=10 && greenBrightness<100) greenBrightnessString = [NSString stringWithFormat:@"0%i", greenBrightness];
-    if (greenBrightness>=100 && greenBrightness<1000) greenBrightnessString = [NSString stringWithFormat:@"%i", greenBrightness];
-    
-    // Calculate the Blue LED Brightness and format the blueBrightness string properly
-    blueBrightness = contrastInUnits*51;
-    if (blueBrightness<10)blueBrightnessString = [NSString stringWithFormat:@"00%i", blueBrightness];
-    if (blueBrightness>=10 && blueBrightness<100) blueBrightnessString = [NSString stringWithFormat:@"0%i", blueBrightness];
-    if (blueBrightness>=100 && blueBrightness<1000) blueBrightnessString = [NSString stringWithFormat:@"%i", blueBrightness];
 }
 
 
@@ -271,12 +298,13 @@
 }
 
 
+
 - (IBAction)timeChangeStop:(id)sender {
     [holdTimer invalidate];
 }
 
 
-- (void) timeUp:(id)sender {
+- (void) timeUp:(id)sender { // This action is taken when the UP SECONDS button is pressed
     
     NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
     NSString *precisionTiming = [prefs stringForKey:@"precisionTiming"];
@@ -292,14 +320,15 @@
         [timeField setText:[NSString stringWithFormat: @"%i", timeInTenthSeconds/10]];
         }
     
-    if (timeInTenthSeconds < 10) timeInSecondsString = [NSString stringWithFormat: @"000%i", timeInTenthSeconds];
-    if (timeInTenthSeconds >=10 && timeInSeconds <100) timeInSecondsString = [NSString stringWithFormat: @"00%i", timeInTenthSeconds];
-    if (timeInTenthSeconds >=100 && timeInTenthSeconds <1000) timeInSecondsString = [NSString stringWithFormat: @"0%i", timeInTenthSeconds];
-    if (timeInTenthSeconds >=1000) timeInSecondsString = [NSString stringWithFormat: @"%i", timeInTenthSeconds];
+    if (timeInTenthSeconds < 10) timeInSecondsString = [NSMutableString stringWithFormat: @"000%i", timeInTenthSeconds];
+    if (timeInTenthSeconds >=10 && timeInSeconds <100) timeInSecondsString = [NSMutableString stringWithFormat: @"00%i", timeInTenthSeconds];
+    if (timeInTenthSeconds >=100 && timeInTenthSeconds <1000) timeInSecondsString = [NSMutableString stringWithFormat: @"0%i", timeInTenthSeconds];
+    if (timeInTenthSeconds >=1000) timeInSecondsString = [NSMutableString stringWithFormat: @"%i", timeInTenthSeconds];
 }
 
 
-- (void) timeDown:(id)sender {
+
+- (void) timeDown:(id)sender { // This action is taken when the DOWN SECONDS button is pressed
     
     NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
     NSString *precisionTiming = [prefs stringForKey:@"precisionTiming"];
@@ -315,66 +344,104 @@
         [timeField setText:[NSString stringWithFormat: @"%i", timeInTenthSeconds/10]];
         }
     
-    if (timeInTenthSeconds < 10)timeInSecondsString = [NSString stringWithFormat: @"000%i", timeInTenthSeconds];
-    if (timeInTenthSeconds >=10 && timeInTenthSeconds <100) timeInSecondsString = [NSString stringWithFormat: @"00%i", timeInTenthSeconds];
-    if (timeInTenthSeconds >=100 && timeInTenthSeconds <1000) timeInSecondsString = [NSString stringWithFormat: @"0%i", timeInTenthSeconds];
-    if (timeInTenthSeconds >=1000) timeInSecondsString = [NSString stringWithFormat: @"%i", timeInTenthSeconds];
+    if (timeInTenthSeconds < 10)timeInSecondsString = [NSMutableString stringWithFormat: @"000%i", timeInTenthSeconds];
+    if (timeInTenthSeconds >=10 && timeInTenthSeconds <100) timeInSecondsString = [NSMutableString stringWithFormat: @"00%i", timeInTenthSeconds];
+    if (timeInTenthSeconds >=100 && timeInTenthSeconds <1000) timeInSecondsString = [NSMutableString stringWithFormat: @"0%i", timeInTenthSeconds];
+    if (timeInTenthSeconds >=1000) timeInSecondsString = [NSMutableString stringWithFormat: @"%i", timeInTenthSeconds];
 }
 
 
-- (IBAction)redButtonPressed:(id)sender {
+
+- (IBAction)redButtonPressed:(id)sender {  //This action occurs when the POSITION button is pressed. For safety, action is taken only when an exposure is not in progress.
+
     
     NSString *s;
     NSData *d;
+    NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
+    NSString *redDimmer = [prefs stringForKey:@"redDimmer"];
+
     
-    if (![timer isValid]){  //button is active only when timer is inactive
-        
+    
         if (redOnOff == 0){
+            
+            if (exposeButtonOnOff == NO){ // Check that an exposure is not in progress
+
             redOnOff = 1;
             [redButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
             [redButton setBackgroundColor:[UIColor redColor]];
             
-            //turn off the focus button
+            // Set up the countdown timer and the time display
+            exposeButtonOnOff = YES;
+            timeCountDown = 3600;
+            countToTen = 10;
+            [self timerTenthTick:nil];
+
+            //turn off the FOCUS button
             focusOnOff = 0;
             [focusButton setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
             [focusButton setBackgroundColor:[UIColor blackColor]];
             
-            s = [NSString stringWithFormat:@"0023600%@000000\r\n", redBrightnessString];
+            //Set the Red Brightness based on user preferences
+            if ([redDimmer isEqual:@"HI"]) redBrightnessString = [NSMutableString stringWithFormat:@"255"];
+            else redBrightnessString = [NSMutableString stringWithFormat:@"064"];
+
+            // Send Arduino command to turn on only the red LED for 6 minutes (3600 tenths of a second).
+            s = [NSString stringWithFormat:@"0003600%@000000\r\n", redBrightnessString];
             d = [s dataUsingEncoding:NSUTF8StringEncoding];
             [bleShield write:d];
+            }
         }
         
         else{
+            
+            // Reset the FOCUS button
             redOnOff = 0;
             [redButton setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
             [redButton setBackgroundColor:[UIColor blackColor]];
-           
+            
+            
+            // Send the Arduino the command to turn everything off
             [self bleShieldSendNull:nil];
+            
+            //  Reset the START button
+            exposeButtonOnOff = NO;
+            [exposeButton setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
+            [exposeButton setTitle:@"Start" forState:UIControlStateNormal];
+            [exposeButton setBackgroundColor:[UIColor blackColor]];
+            
 
         }
-    }
 }
 
-- (IBAction)focusButtonPressed:(id)sender {
+- (IBAction)focusButtonPressed:(id)sender { //This action occurs when the FOCUS button is pressed.  For safety, action is taken only when an exposure is not in progress.
     
     NSString *s;
     NSData *d;
     
-    if (![timer isValid]){  //button is active only when timer is inactive
-        
         if (focusOnOff == 0){
+            
+            if (exposeButtonOnOff == NO){ // Check that an exposure is not in progress
+
             focusOnOff = 1;
             [focusButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
             [focusButton setBackgroundColor:[UIColor redColor]];
             
-            //turn off the red (position) button
+            // Set up the countdown timer and the time display
+            exposeButtonOnOff = YES;
+            timeCountDown = 1800;
+            countToTen = 10;
+            [self timerTenthTick:nil];
+            
+            //turn off the POSITION button
             redOnOff = 0;
             [redButton setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
             [redButton setBackgroundColor:[UIColor blackColor]];
             
-            s = [NSString stringWithFormat:@"0011800255255255\r\n"];
+            // Send Arduino command to turn on all LEDs for 3 minutes (1800 tenths of a second).
+            s = [NSString stringWithFormat:@"0001800000255255\r\n"];
             d = [s dataUsingEncoding:NSUTF8StringEncoding];
             [bleShield write:d];
+            }
         }
         
         else{
@@ -382,11 +449,17 @@
             [focusButton setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
             [focusButton setBackgroundColor:[UIColor blackColor]];
             
-            s = [NSString stringWithFormat:@"0000000000000000\r\n"];
-            d = [s dataUsingEncoding:NSUTF8StringEncoding];
-            [bleShield write:d];
+            // Send the Arduino the command to turn everything off
+            [self bleShieldSendNull:nil];
+            
+            //  Reset the START button
+            exposeButtonOnOff = NO;
+            [exposeButton setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
+            [exposeButton setTitle:@"Start" forState:UIControlStateNormal];
+            [exposeButton setBackgroundColor:[UIColor blackColor]];
+            
         }
-    }
+    
 }
 
 
@@ -398,19 +471,17 @@
     NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
     NSString *metronomeOn = [prefs stringForKey:@"metronome"];
 
-    
+    // Set Contrast, Time, and Blue brightness to 0, green brightness to 255
     contrastInUnits = 0;
     [contrastField setText:[NSString stringWithFormat: @"%1.0f", contrastInUnits]];
     timeInTenthSeconds = 0;
     timeCountDown = 0;
-    timeInSecondsString = [NSString stringWithFormat: @"0000"];
+    timeInSecondsString = [NSMutableString stringWithFormat: @"0000"];
     [timeField setText:[NSString stringWithFormat: @"%i", timeInTenthSeconds]];
     greenBrightness = 255;
-    greenBrightnessString = [NSString stringWithFormat:@"255"];
     blueBrightness = 0;
-    blueBrightnessString = [NSString stringWithFormat:@"000"];
     
-    // Reset exposeButton
+    // Reset START button (exposeButton)
     exposeButtonOnOff = NO;
     [exposeButton setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
     [exposeButton setTitle:@"Start" forState:UIControlStateNormal];
@@ -418,12 +489,12 @@
     if ([metronomeOn isEqual: @"YES"]) [audioBeepPlayer play];
     [timer invalidate];
     
-    // Reset focusButton
+    // Reset FOCUS button (focusButton)
     focusOnOff = 0;
     [focusButton setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
     [focusButton setBackgroundColor:[UIColor blackColor]];
     
-    //Reset redButton
+    //Reset POSITION button (redButton)
     redOnOff = 0;
     [redButton setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
     [redButton setBackgroundColor:[UIColor blackColor]];
@@ -508,31 +579,23 @@
     
     
     // Initialize variables
-    
     timeInSeconds = 0;
     contrastInUnits = 0;
     redOnOff = 0;
     focusOnOff = 0;
     exposeButtonOnOff = NO;
     countToTen = 0;
-    
-    timeInSecondsString = [NSString stringWithFormat:@"0000"];
-    redBrightnessString = [NSString stringWithFormat:@"064"];
-    greenBrightnessString = [NSString stringWithFormat:@"255"];
-    blueBrightnessString = [NSString stringWithFormat:@"000"];
+    timeInSecondsString = [NSMutableString stringWithFormat:@"0000"];
    
-    
-    
+    // Initialize User Preferences
     NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
-    [prefs setObject:@"NO" forKey:@"precisionTiming"];
-    [prefs setObject:@"NO" forKey:@"precisionContrast"];
     [prefs setObject:@"YES" forKey:@"metronome"];
+    [prefs setObject:@"NO" forKey:@"precisionContrast"];
+    [prefs setObject:@"NO" forKey:@"precisionTiming"];
+    [prefs setObject:@"NO" forKey:@"delayStartOn"];
     [prefs setObject:@"LO" forKey:@"redDimmer"];
-
-
-    //NSString *myString = [prefs stringForKey:@"precisionTiming"];
-    //NSLog(@"tenthSeconds = %@", myString);
-    
+    [prefs setObject:@"HI" forKey:@"brightness"];
+   
     
     // Set up Tink audio sound
     NSURL *url = [NSURL fileURLWithPath:[NSString stringWithFormat:@"%@/Tink.aiff", [[NSBundle mainBundle] resourcePath]]];
@@ -547,12 +610,7 @@
 	audioBeepPlayer = [[AVAudioPlayer alloc] initWithContentsOfURL:url2 error:&error2];
 	audioBeepPlayer.numberOfLoops = 0;
     
-    //set up and invalidate timer once to reserve memory
-    timer = [NSTimer scheduledTimerWithTimeInterval:1 target:self selector:@selector(timerTick:) userInfo:nil repeats:YES];
-    [timer invalidate];
-    
 
-    
     //Create custom buttons
     exposeButton.layer.borderColor = [UIColor redColor].CGColor;
     [[exposeButton layer] setCornerRadius:14.0f];
@@ -634,6 +692,8 @@
    
 }
 
+
+
 - (void)didReceiveMemoryWarning
 {
     [super didReceiveMemoryWarning];
@@ -649,7 +709,6 @@
 
     NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
     NSString *precisionTiming = [prefs stringForKey:@"precisionTiming"];
-    NSString *redDimmer = [prefs stringForKey:@"redDimmer"];
 
 
     
@@ -663,16 +722,15 @@
     }
     
     //set the timeInSecondsString properly to reflect the updated timeInTenthSeconds
-    if (timeInTenthSeconds < 10) timeInSecondsString = [NSString stringWithFormat: @"000%i", timeInTenthSeconds];
-    if (timeInTenthSeconds >=10 && timeInSeconds <100) timeInSecondsString = [NSString stringWithFormat: @"00%i", timeInTenthSeconds];
-    if (timeInTenthSeconds >=100 && timeInTenthSeconds <1000) timeInSecondsString = [NSString stringWithFormat: @"0%i", timeInTenthSeconds];
-    if (timeInTenthSeconds >=1000) timeInSecondsString = [NSString stringWithFormat: @"%i", timeInTenthSeconds];
+    if (timeInTenthSeconds < 10) timeInSecondsString = [NSMutableString stringWithFormat: @"000%i", timeInTenthSeconds];
+    if (timeInTenthSeconds >=10 && timeInSeconds <100) timeInSecondsString = [NSMutableString stringWithFormat: @"00%i", timeInTenthSeconds];
+    if (timeInTenthSeconds >=100 && timeInTenthSeconds <1000) timeInSecondsString = [NSMutableString stringWithFormat: @"0%i", timeInTenthSeconds];
+    if (timeInTenthSeconds >=1000) timeInSecondsString = [NSMutableString stringWithFormat: @"%i", timeInTenthSeconds];
     
-    //Set the Red Brightness
-    if ([redDimmer isEqual:@"HI"]) redBrightnessString = [NSString stringWithFormat:@"255"];
-    else redBrightnessString = [NSString stringWithFormat:@"064"];
 
 }
+
+
 
 - (IBAction)showInfo:(id)sender
 {    

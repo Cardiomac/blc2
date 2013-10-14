@@ -28,6 +28,8 @@
 @property (weak, nonatomic) IBOutlet UIButton *redDimmerSwitch;
 @property (weak, nonatomic) IBOutlet UIButton *doneButton;
 @property (weak, nonatomic) IBOutlet UIButton *backgroundRectangle;
+@property (weak, nonatomic) IBOutlet UIButton *brightnessSwitch;
+
 
 - (IBAction)done:(id)sender;
 
