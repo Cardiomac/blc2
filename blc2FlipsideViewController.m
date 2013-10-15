@@ -23,6 +23,7 @@
 @synthesize redDimmerSwitch;
 @synthesize backgroundRectangle;
 @synthesize brightnessSwitch;
+@synthesize preflashSwitch;
 
 
 
@@ -33,36 +34,42 @@
     
     //set switches to proper position based on user preferences
     NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
+    
     NSString *precisionTiming = [prefs stringForKey:@"precisionTiming"];
     if ([precisionTiming isEqual: @"YES"])
-        [precisionTimingSwitch setTitle:[NSString stringWithFormat: @"  On"] forState:UIControlStateNormal];
-    else [precisionTimingSwitch setTitle:[NSString stringWithFormat: @"          Off"] forState:UIControlStateNormal];
+        [precisionTimingSwitch setTitle:[NSString stringWithFormat: @"          On"] forState:UIControlStateNormal];
+    else [precisionTimingSwitch setTitle:[NSString stringWithFormat: @"  Off"] forState:UIControlStateNormal];
   
     NSString *precionContrast = [prefs stringForKey:@"precisionContrast"];
     if ([precionContrast isEqual: @"YES"])
-        [precisionContrastSwitch setTitle:[NSString stringWithFormat: @"  On"] forState:UIControlStateNormal];    
-    else [precisionContrastSwitch setTitle:[NSString stringWithFormat: @"          Off"] forState:UIControlStateNormal];
+        [precisionContrastSwitch setTitle:[NSString stringWithFormat: @"          On"] forState:UIControlStateNormal];
+    else [precisionContrastSwitch setTitle:[NSString stringWithFormat: @"  Off"] forState:UIControlStateNormal];
 
     NSString *metronomeOn = [prefs stringForKey:@"metronome"];
     if ([metronomeOn isEqual: @"YES"])
-        [metronomeSwitch setTitle:[NSString stringWithFormat: @"  On"] forState:UIControlStateNormal];
-    else [metronomeSwitch setTitle:[NSString stringWithFormat: @"          Off"] forState:UIControlStateNormal];
+        [metronomeSwitch setTitle:[NSString stringWithFormat: @"          On"] forState:UIControlStateNormal];
+    else [metronomeSwitch setTitle:[NSString stringWithFormat: @"  Off"] forState:UIControlStateNormal];
     
     
     NSString *delayStartOn = [prefs stringForKey:@"delayStart"];
     if ([delayStartOn isEqual: @"YES"])
-        [delayStartSwitch setTitle:[NSString stringWithFormat: @"  On"] forState:UIControlStateNormal];
-    else [delayStartSwitch setTitle:[NSString stringWithFormat: @"          Off"] forState:UIControlStateNormal];
+        [delayStartSwitch setTitle:[NSString stringWithFormat: @"          On"] forState:UIControlStateNormal];
+    else [delayStartSwitch setTitle:[NSString stringWithFormat: @"  Off"] forState:UIControlStateNormal];
     
     NSString *redDimmer = [prefs stringForKey:@"redDimmer"];
     if ([redDimmer isEqual: @"HI"])
-        [redDimmerSwitch setTitle:[NSString stringWithFormat: @"  Hi"] forState:UIControlStateNormal];
-    else [redDimmerSwitch setTitle:[NSString stringWithFormat: @"           Lo"] forState:UIControlStateNormal];
+        [redDimmerSwitch setTitle:[NSString stringWithFormat: @"           Hi"] forState:UIControlStateNormal];
+    else [redDimmerSwitch setTitle:[NSString stringWithFormat: @"  Lo"] forState:UIControlStateNormal];
     
+    NSString *preflash = [prefs stringForKey:@"preflash"];
+    if ([preflash isEqual: @"YES"])
+        [preflashSwitch setTitle:[NSString stringWithFormat: @"          On"] forState:UIControlStateNormal];
+    else [preflashSwitch setTitle:[NSString stringWithFormat: @"  Off"] forState:UIControlStateNormal];
+
     NSString *brightness = [prefs stringForKey:@"brightness"];
     if ([brightness isEqual: @"HI"])
-        [brightnessSwitch setTitle:[NSString stringWithFormat: @"  Hi"] forState:UIControlStateNormal];
-    else [brightnessSwitch setTitle:[NSString stringWithFormat: @"           Lo"] forState:UIControlStateNormal];
+        [brightnessSwitch setTitle:[NSString stringWithFormat: @"           Hi"] forState:UIControlStateNormal];
+    else [brightnessSwitch setTitle:[NSString stringWithFormat: @"  Lo"] forState:UIControlStateNormal];
     
     
     //define custom buttons
@@ -115,7 +122,12 @@
     [brightnessSwitch setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
     [brightnessSwitch setTitleColor:[UIColor blackColor] forState:UIControlStateHighlighted];
     
-
+    preflashSwitch.layer.borderColor = [UIColor redColor].CGColor;
+    [[preflashSwitch layer] setCornerRadius:8.0f];
+    [[preflashSwitch layer] setBorderWidth:3.0f];
+    [preflashSwitch setBackgroundColor:[UIColor blackColor]];
+    [preflashSwitch setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
+    [preflashSwitch setTitleColor:[UIColor blackColor] forState:UIControlStateHighlighted];
     
     backgroundRectangle.layer.borderColor = [UIColor redColor].CGColor;
     [[backgroundRectangle layer] setCornerRadius:8.0f];
@@ -143,12 +155,12 @@
     
     if ([metronomeOn isEqual: @"YES"]){
         [prefs setObject:@"NO" forKey:@"metronome"];
-        [metronomeSwitch setTitle:[NSString stringWithFormat: @"          Off"] forState:UIControlStateNormal];
+        [metronomeSwitch setTitle:[NSString stringWithFormat: @"  Off"] forState:UIControlStateNormal];
 
     }
     else{
         [prefs setObject:@"YES" forKey:@"metronome"];
-        [metronomeSwitch setTitle:[NSString stringWithFormat: @"  On"] forState:UIControlStateNormal];
+        [metronomeSwitch setTitle:[NSString stringWithFormat: @"          On"] forState:UIControlStateNormal];
 
     }
     
@@ -161,11 +173,11 @@
     
     if ([precisionContrast isEqual: @"NO"]){
         [prefs setObject:@"YES" forKey:@"precisionContrast"];
-        [precisionContrastSwitch setTitle:[NSString stringWithFormat: @"  On"] forState:UIControlStateNormal];
+        [precisionContrastSwitch setTitle:[NSString stringWithFormat: @"          On"] forState:UIControlStateNormal];
     }
     else{
         [prefs setObject:@"NO" forKey:@"precisionContrast"];
-        [precisionContrastSwitch setTitle:[NSString stringWithFormat: @"          Off"] forState:UIControlStateNormal];
+        [precisionContrastSwitch setTitle:[NSString stringWithFormat: @"  Off"] forState:UIControlStateNormal];
     }
     
 }
@@ -177,11 +189,11 @@
     
     if ([precisionTiming isEqual: @"NO"]){
         [prefs setObject:@"YES" forKey:@"precisionTiming"];
-        [precisionTimingSwitch setTitle:[NSString stringWithFormat: @"  On"] forState:UIControlStateNormal];
+        [precisionTimingSwitch setTitle:[NSString stringWithFormat: @"          On"] forState:UIControlStateNormal];
     }
     else{
         [prefs setObject:@"NO" forKey:@"precisionTiming"];
-        [precisionTimingSwitch setTitle:[NSString stringWithFormat: @"          Off"] forState:UIControlStateNormal];
+        [precisionTimingSwitch setTitle:[NSString stringWithFormat: @"  Off"] forState:UIControlStateNormal];
 
     }
     
@@ -197,11 +209,11 @@
     
     if ([delayStartOn isEqual: @"NO"]){
         [prefs setObject:@"YES" forKey:@"delayStart"];
-        [delayStartSwitch setTitle:[NSString stringWithFormat: @"  On"] forState:UIControlStateNormal];
+        [delayStartSwitch setTitle:[NSString stringWithFormat: @"          On"] forState:UIControlStateNormal];
     }
     else{
         [prefs setObject:@"NO" forKey:@"delayStart"];
-        [delayStartSwitch setTitle:[NSString stringWithFormat: @"          Off"] forState:UIControlStateNormal];
+        [delayStartSwitch setTitle:[NSString stringWithFormat: @"  Off"] forState:UIControlStateNormal];
         
     }
 }
@@ -213,14 +225,31 @@
     
     if ([redDimmer isEqual: @"LO"]){
         [prefs setObject:@"HI" forKey:@"redDimmer"];
-        [redDimmerSwitch setTitle:[NSString stringWithFormat: @"  Hi"] forState:UIControlStateNormal];
+        [redDimmerSwitch setTitle:[NSString stringWithFormat: @"           Hi"] forState:UIControlStateNormal];
     }
     else{
         [prefs setObject:@"LO" forKey:@"redDimmer"];
-        [redDimmerSwitch setTitle:[NSString stringWithFormat: @"           Lo"] forState:UIControlStateNormal];
+        [redDimmerSwitch setTitle:[NSString stringWithFormat: @"  Lo"] forState:UIControlStateNormal];
         
     }
 }
+
+- (IBAction)preflashSwitch:(id)sender {
+    
+    NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
+    NSString *preflash = [prefs stringForKey:@"preflash"];
+    
+    if ([preflash isEqual: @"NO"]){
+        [prefs setObject:@"YES" forKey:@"preflash"];
+        [preflashSwitch setTitle:[NSString stringWithFormat: @"          On"] forState:UIControlStateNormal];
+    }
+    else{
+        [prefs setObject:@"NO" forKey:@"preflash"];
+        [preflashSwitch setTitle:[NSString stringWithFormat: @"  Off"] forState:UIControlStateNormal];
+        
+    }
+}
+
 
 - (IBAction)brightnessSwitch:(id)sender {
     
@@ -229,11 +258,11 @@
     
     if ([brightness isEqual: @"LO"]){
         [prefs setObject:@"HI" forKey:@"brightness"];
-        [brightnessSwitch setTitle:[NSString stringWithFormat: @"  Hi"] forState:UIControlStateNormal];
+        [brightnessSwitch setTitle:[NSString stringWithFormat: @"           Hi"] forState:UIControlStateNormal];
     }
     else{
         [prefs setObject:@"LO" forKey:@"brightness"];
-        [brightnessSwitch setTitle:[NSString stringWithFormat: @"           Lo"] forState:UIControlStateNormal];
+        [brightnessSwitch setTitle:[NSString stringWithFormat: @"  Lo"] forState:UIControlStateNormal];
         
     }
 }

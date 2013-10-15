@@ -104,6 +104,8 @@
     NSData *d;
     NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
     NSString *brightness = [prefs stringForKey:@"brightness"];
+    NSString *preflash = [prefs stringForKey:@"preflash"];
+
     
     
     timeCountDown = timeInTenthSeconds;
@@ -112,7 +114,10 @@
     
     
     if ([brightness isEqual: @"HI"]){brightnessMultiplier = 51;}
-    else {brightnessMultiplier = 1;}
+    else {brightnessMultiplier = 12;}
+    
+    if ([preflash isEqual: @"YES"]){brightnessMultiplier = 1;}
+
 
     
     // Calculate the Green LED Brightness and format the greenBrightness string properly
@@ -589,11 +594,12 @@
    
     // Initialize User Preferences
     NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
-    [prefs setObject:@"YES" forKey:@"metronome"];
+    [prefs setObject:@"NO" forKey:@"metronome"];
     [prefs setObject:@"NO" forKey:@"precisionContrast"];
     [prefs setObject:@"NO" forKey:@"precisionTiming"];
     [prefs setObject:@"NO" forKey:@"delayStartOn"];
     [prefs setObject:@"LO" forKey:@"redDimmer"];
+    [prefs setObject:@"NO" forKey:@"preflash"];
     [prefs setObject:@"HI" forKey:@"brightness"];
    
     
