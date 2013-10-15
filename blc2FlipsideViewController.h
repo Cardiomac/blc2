@@ -26,9 +26,12 @@
 @property (weak, nonatomic) IBOutlet UIButton *precisionTimingSwitch;
 @property (weak, nonatomic) IBOutlet UIButton *delayStartSwitch;
 @property (weak, nonatomic) IBOutlet UIButton *redDimmerSwitch;
-@property (weak, nonatomic) IBOutlet UIButton *doneButton;
-@property (weak, nonatomic) IBOutlet UIButton *backgroundRectangle;
+@property (weak, nonatomic) IBOutlet UIButton *preflashSwitch;
 @property (weak, nonatomic) IBOutlet UIButton *brightnessSwitch;
+@property (weak, nonatomic) IBOutlet UIButton *backgroundRectangle;
+@property (weak, nonatomic) IBOutlet UIButton *doneButton;
+
+
 
 
 - (IBAction)done:(id)sender;
